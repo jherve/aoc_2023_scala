@@ -7,6 +7,6 @@ import day04._
 
   val result = (day, part) match
     case (1, 1) => getSum(lines)
-    case (4, _) => getSumForDay04(lines)
+    case (4, _) => Day4.getSum(lines)
 
   println(result)
