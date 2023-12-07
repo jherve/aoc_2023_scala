@@ -12,8 +12,12 @@ object Day4 {
           case winningStr :: mineStr :: Nil =>
             val winning = winningStr.trim().split("\\s+").toSet.map(_.toInt)
             val mine = mineStr.trim().split("\\s+").toSet.map(_.toInt)
-            Card(cardId, winning, mine)
+            Some(Card(cardId, winning, mine))
+
+          case _ => None
         }
+
+      case _ => None
     }
   }
 
@@ -24,6 +28,7 @@ object Day4 {
   def getSum(lines: Iterator[String]) = {
     lines
       .map(intoCard)
+      .flatten
       .map(getWinning)
       .filterNot(_.isEmpty)
       .map(set => pow(2, set.size - 1).intValue)
