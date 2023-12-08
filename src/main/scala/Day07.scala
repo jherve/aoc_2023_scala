@@ -179,13 +179,45 @@ object SortedHand:
     val cards = string.toCharArray().map(CardLabel.fromChar).map(Card(_)).toList
     fromCards(cards)
 
-case class HandBid(hand: SortedHand, bid: Int)
+case class Hand(cards: List[Card]) extends Ordered[Hand]:
+  def asSorted =
+    SortedHand.fromCards(cards)
+
+  def compare(that: Hand) =
+    val strengthComp =
+      this.asSorted.intrinsicStrength.compare(that.asSorted.intrinsicStrength)
+    if strengthComp == 0
+    then
+      val compare0 = this.compareNth(that, 0)
+      val compare1 = this.compareNth(that, 1)
+      val compare2 = this.compareNth(that, 2)
+      val compare3 = this.compareNth(that, 3)
+      val compare4 = this.compareNth(that, 4)
+      if compare0 == 0 then
+        if compare1 == 0 then
+          if compare2 == 0 then
+            if compare3 == 0 then compare4
+            else compare3
+          else compare2
+        else compare1
+      else compare0
+    else strengthComp
+
+  def compareNth(that: Hand, n: Int) =
+    this.cards(n).label.value.compare(that.cards(n).label.value)
+
+object Hand:
+  def fromString(string: String) =
+    val cards = string.toCharArray().map(CardLabel.fromChar).map(Card(_)).toList
+    Hand(cards)
+
+case class HandBid(hand: Hand, bid: Int)
 
 object HandBid:
   def fromString(string: String) =
     string.split("\\ ").toList match
       case handStr :: bidStr :: Nil =>
-        Some(HandBid(SortedHand.fromString(handStr), bidStr.toInt))
+        Some(HandBid(Hand.fromString(handStr), bidStr.toInt))
       case _ => None
 
 case class FullGame(handBids: List[HandBid]):
