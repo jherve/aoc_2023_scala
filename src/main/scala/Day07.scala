@@ -34,7 +34,7 @@ enum CardLabel extends Ordered[CardLabel]:
     this.value.compare(that.value)
 
 object CardLabel:
-  def fromChar(char: Char) =
+  def parse(char: Char) =
     char match {
       case 'A' => CardLabel.A
       case 'K' => CardLabel.K
@@ -95,30 +95,38 @@ object SortedHand:
 
   def fromCards(cards: List[Card]) =
     sorted(cards) match
-      case (highest, 5) :: Nil => SortedHand.FIVE_OF_A_KIND(highest)
+      case (highest, 5) :: Nil => Some(SortedHand.FIVE_OF_A_KIND(highest))
+
       case (highest, 4) :: (lowest, 1) :: Nil =>
-        SortedHand.FOUR_OF_A_KIND(highest, lowest)
+        Some(SortedHand.FOUR_OF_A_KIND(highest, lowest))
+
       case (highest, 3) :: (second, 2) :: Nil =>
-        SortedHand.FULL_HOUSE(highest, second)
+        Some(SortedHand.FULL_HOUSE(highest, second))
+
       case (highest, 3) :: (second, 1) :: (third, 1) :: Nil =>
-        SortedHand.THREE_OF_A_KIND(highest, second, third)
+        Some(SortedHand.THREE_OF_A_KIND(highest, second, third))
+
       case (strongest, 2) :: (weakest, 2) :: (last, 1) :: Nil =>
-        SortedHand.TWO_PAIRS(strongest, weakest, last)
+        Some(SortedHand.TWO_PAIRS(strongest, weakest, last))
+
       case (oneCard, 2) :: (second, 1) :: (third, 1) :: (fourth, 1) :: Nil =>
-        SortedHand.ONE_PAIR(oneCard, second, third, fourth)
+        Some(SortedHand.ONE_PAIR(oneCard, second, third, fourth))
+
       case (oneCard, 1) :: (second, 1) :: (third, 1) :: (fourth, 1) :: (
             fifth,
             1
           ) :: Nil =>
-        SortedHand.HIGH_CARD(oneCard, second, third, fourth, fifth)
+        Some(SortedHand.HIGH_CARD(oneCard, second, third, fourth, fifth))
 
-  def fromString(string: String) =
-    val cards = string.toCharArray().map(CardLabel.fromChar).map(Card(_)).toList
+      case _ => None
+
+  def parse(string: String) =
+    val cards = string.toCharArray().map(CardLabel.parse).map(Card(_)).toList
     fromCards(cards)
 
 case class Hand(cards: List[Card]) extends Ordered[Hand]:
   def asSorted =
-    SortedHand.fromCards(cards)
+    SortedHand.fromCards(cards).get
 
   def compare(that: Hand) =
     val strengthComp =
@@ -144,17 +152,17 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
     this.cards(n).compare(that.cards(n))
 
 object Hand:
-  def fromString(string: String) =
-    val cards = string.toCharArray().map(CardLabel.fromChar).map(Card(_)).toList
+  def parse(string: String) =
+    val cards = string.toCharArray().map(CardLabel.parse).map(Card(_)).toList
     Hand(cards)
 
 case class HandBid(hand: Hand, bid: Int)
 
 object HandBid:
-  def fromString(string: String) =
+  def parse(string: String) =
     string.split("\\ ").toList match
       case handStr :: bidStr :: Nil =>
-        Some(HandBid(Hand.fromString(handStr), bidStr.toInt))
+        Some(HandBid(Hand.parse(handStr), bidStr.toInt))
       case _ => None
 
 case class FullGame(handBids: List[HandBid]):
@@ -168,13 +176,13 @@ case class FullGame(handBids: List[HandBid]):
       .sum
 
 object FullGame:
-  def fromString(lines: Iterator[String]) =
+  def parse(lines: Iterator[String]) =
     FullGame(
-      lines.map(HandBid.fromString(_)).toList.map(_.get)
+      lines.map(HandBid.parse(_)).toList.map(_.get)
     )
 
 object Day7 {
   def getSum(lines: Iterator[String]) = {
-    FullGame.fromString(lines).winnings
+    FullGame.parse(lines).winnings
   }
 }
