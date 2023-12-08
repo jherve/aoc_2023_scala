@@ -57,32 +57,21 @@ case class Card(label: CardLabel) extends Ordered[Card]:
 
 enum SortedHand:
   case FIVE_OF_A_KIND(main: CardLabel)
-  case FOUR_OF_A_KIND(main: CardLabel, last: CardLabel)
-  case FULL_HOUSE(main: CardLabel, lowest: CardLabel)
-  case THREE_OF_A_KIND(main: CardLabel, second: CardLabel, third: CardLabel)
-  case TWO_PAIRS(main: CardLabel, lowest: CardLabel, last: CardLabel)
-  case ONE_PAIR(
-      main: CardLabel,
-      second: CardLabel,
-      third: CardLabel,
-      fourth: CardLabel
-  )
-  case HIGH_CARD(
-      card: CardLabel,
-      second: CardLabel,
-      third: CardLabel,
-      fourth: CardLabel,
-      fifth: CardLabel
-  )
+  case FOUR_OF_A_KIND(main: CardLabel)
+  case FULL_HOUSE(main: CardLabel)
+  case THREE_OF_A_KIND(main: CardLabel)
+  case TWO_PAIRS(main: CardLabel)
+  case ONE_PAIR(main: CardLabel)
+  case HIGH_CARD
 
   def intrinsicStrength = this match {
-    case HIGH_CARD(_, _, _, _, _) => 1
-    case ONE_PAIR(_, _, _, _)     => 2
-    case TWO_PAIRS(_, _, _)       => 3
-    case THREE_OF_A_KIND(_, _, _) => 4
-    case FULL_HOUSE(_, _)         => 5
-    case FOUR_OF_A_KIND(_, _)     => 6
-    case FIVE_OF_A_KIND(_)        => 7
+    case HIGH_CARD          => 1
+    case ONE_PAIR(_)        => 2
+    case TWO_PAIRS(_)       => 3
+    case THREE_OF_A_KIND(_) => 4
+    case FULL_HOUSE(_)      => 5
+    case FOUR_OF_A_KIND(_)  => 6
+    case FIVE_OF_A_KIND(_)  => 7
   }
 
 object SortedHand:
@@ -95,30 +84,14 @@ object SortedHand:
 
   def fromCards(cards: List[Card]) =
     sorted(cards) match
-      case (highest, 5) :: Nil => Some(SortedHand.FIVE_OF_A_KIND(highest))
-
-      case (highest, 4) :: (lowest, 1) :: Nil =>
-        Some(SortedHand.FOUR_OF_A_KIND(highest, lowest))
-
-      case (highest, 3) :: (second, 2) :: Nil =>
-        Some(SortedHand.FULL_HOUSE(highest, second))
-
-      case (highest, 3) :: (second, 1) :: (third, 1) :: Nil =>
-        Some(SortedHand.THREE_OF_A_KIND(highest, second, third))
-
-      case (strongest, 2) :: (weakest, 2) :: (last, 1) :: Nil =>
-        Some(SortedHand.TWO_PAIRS(strongest, weakest, last))
-
-      case (oneCard, 2) :: (second, 1) :: (third, 1) :: (fourth, 1) :: Nil =>
-        Some(SortedHand.ONE_PAIR(oneCard, second, third, fourth))
-
-      case (oneCard, 1) :: (second, 1) :: (third, 1) :: (fourth, 1) :: (
-            fifth,
-            1
-          ) :: Nil =>
-        Some(SortedHand.HIGH_CARD(oneCard, second, third, fourth, fifth))
-
-      case _ => None
+      case (main, 5) :: Nil         => Some(SortedHand.FIVE_OF_A_KIND(main))
+      case (main, 4) :: _           => Some(SortedHand.FOUR_OF_A_KIND(main))
+      case (main, 3) :: (_, 2) :: _ => Some(SortedHand.FULL_HOUSE(main))
+      case (main, 3) :: _           => Some(SortedHand.THREE_OF_A_KIND(main))
+      case (main, 2) :: (_, 2) :: _ => Some(SortedHand.TWO_PAIRS(main))
+      case (main, 2) :: _           => Some(SortedHand.ONE_PAIR(main))
+      case (_, 1) :: _              => Some(SortedHand.HIGH_CARD)
+      case _                        => None
 
   def parse(string: String) =
     val cards = string.toCharArray().map(CardLabel.parse).map(Card(_)).toList
