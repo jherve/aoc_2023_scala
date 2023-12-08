@@ -1,5 +1,5 @@
 package day07
-enum CardLabel:
+enum CardLabel extends Ordered[CardLabel]:
   case A
   case K
   case Q
@@ -30,6 +30,9 @@ enum CardLabel:
     case A  => 13
   }
 
+  def compare(that: CardLabel) =
+    this.value.compare(that.value)
+
 object CardLabel:
   def fromChar(char: Char) =
     char match {
@@ -48,9 +51,11 @@ object CardLabel:
       case '2' => CardLabel.N2
     }
 
-case class Card(label: CardLabel)
+case class Card(label: CardLabel) extends Ordered[Card]:
+  def compare(that: Card) =
+    this.label.compare(that.label)
 
-enum SortedHand extends Ordered[SortedHand]:
+enum SortedHand:
   case FIVE_OF_A_KIND(main: CardLabel)
   case FOUR_OF_A_KIND(main: CardLabel, last: CardLabel)
   case FULL_HOUSE(main: CardLabel, lowest: CardLabel)
@@ -136,7 +141,7 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
     else strengthComp
 
   def compareNth(that: Hand, n: Int) =
-    this.cards(n).label.value.compare(that.cards(n).label.value)
+    this.cards(n).compare(that.cards(n))
 
 object Hand:
   def fromString(string: String) =
