@@ -50,94 +50,135 @@ object CardLabel:
 
 case class Card(label: CardLabel)
 
-enum HandType extends Ordered[HandType]:
-  case FIVE_OF_A_KIND(card: CardLabel)
-  case FOUR_OF_A_KIND(card: CardLabel)
-  case FULL_HOUSE(highest: CardLabel, lowest: CardLabel)
-  case THREE_OF_A_KIND(card: CardLabel)
-  case TWO_PAIRS(highest: CardLabel, lowest: CardLabel)
-  case ONE_PAIR(card: CardLabel)
-  case HIGH_CARD(card: CardLabel)
+enum Hand extends Ordered[Hand]:
+  case FIVE_OF_A_KIND(main: CardLabel)
+  case FOUR_OF_A_KIND(main: CardLabel, last: CardLabel)
+  case FULL_HOUSE(main: CardLabel, lowest: CardLabel)
+  case THREE_OF_A_KIND(main: CardLabel, second: CardLabel, third: CardLabel)
+  case TWO_PAIRS(main: CardLabel, lowest: CardLabel, last: CardLabel)
+  case ONE_PAIR(
+      main: CardLabel,
+      second: CardLabel,
+      third: CardLabel,
+      fourth: CardLabel
+  )
+  case HIGH_CARD(
+      card: CardLabel,
+      second: CardLabel,
+      third: CardLabel,
+      fourth: CardLabel,
+      fifth: CardLabel
+  )
 
-  def compare(that: HandType) = {
-    val strenghtComp = this.strength.compare(that.strength)
-    if strenghtComp != 0 then {
-      strenghtComp
-    } else {
-      val highestCompare = this.highestCard.compare(that.highestCard)
-      if highestCard != 0 then {
-        highestCompare
-      } else {
-        (this, that) match {
-          case (TWO_PAIRS(_, s1), TWO_PAIRS(_, s2)) =>
-            s1.value.compare(s2.value)
-          case (FULL_HOUSE(_, s1), FULL_HOUSE(_, s2)) =>
-            s1.value.compare(s2.value)
-        }
-      }
+  def intrinsicStrength = this match {
+    case HIGH_CARD(_, _, _, _, _) => 1
+    case ONE_PAIR(_, _, _, _)     => 2
+    case TWO_PAIRS(_, _, _)       => 3
+    case THREE_OF_A_KIND(_, _, _) => 4
+    case FULL_HOUSE(_, _)         => 5
+    case FOUR_OF_A_KIND(_, _)     => 6
+    case FIVE_OF_A_KIND(_)        => 7
+  }
+
+  def compare(that: Hand) = {
+    (this, that) match {
+      case (FIVE_OF_A_KIND(c1), FIVE_OF_A_KIND(c2)) =>
+        c1.value.compare(c2.value)
+
+      case (FOUR_OF_A_KIND(c11, c12), FOUR_OF_A_KIND(c21, c22)) =>
+        val comp1 = c11.value.compare(c21.value)
+        val comp2 = c12.value.compare(c22.value)
+        if comp1 == 0 then comp2 else comp1
+
+      case (FULL_HOUSE(c11, c12), FULL_HOUSE(c21, c22)) =>
+        val comp1 = c11.value.compare(c21.value)
+        val comp2 = c12.value.compare(c22.value)
+        if comp1 == 0 then comp2 else comp1
+
+      case (THREE_OF_A_KIND(c11, c12, c13), THREE_OF_A_KIND(c21, c22, c23)) =>
+        val comp1 = c11.value.compare(c21.value)
+        val comp2 = c12.value.compare(c22.value)
+        val comp3 = c13.value.compare(c23.value)
+        if comp1 == 0 then
+          if comp2 == 0 then comp3
+          else comp2
+        else comp1
+
+      case (TWO_PAIRS(c11, c12, c13), TWO_PAIRS(c21, c22, c23)) =>
+        val comp1 = c11.value.compare(c21.value)
+        val comp2 = c12.value.compare(c22.value)
+        val comp3 = c13.value.compare(c23.value)
+        if comp1 == 0 then
+          if comp2 == 0 then comp3
+          else comp2
+        else comp1
+
+      case (ONE_PAIR(c11, c12, c13, c14), ONE_PAIR(c21, c22, c23, c24)) =>
+        val comp1 = c11.value.compare(c21.value)
+        val comp2 = c12.value.compare(c22.value)
+        val comp3 = c13.value.compare(c23.value)
+        val comp4 = c14.value.compare(c24.value)
+        if comp1 == 0 then
+          if comp2 == 0 then
+            if comp3 == 0 then comp4
+            else comp3
+          else comp2
+        else comp1
+
+      case (
+            HIGH_CARD(c11, c12, c13, c14, c15),
+            HIGH_CARD(c21, c22, c23, c24, c25)
+          ) =>
+        val comp1 = c11.value.compare(c21.value)
+        val comp2 = c12.value.compare(c22.value)
+        val comp3 = c13.value.compare(c23.value)
+        val comp4 = c14.value.compare(c24.value)
+        val comp5 = c15.value.compare(c25.value)
+        if comp1 == 0 then
+          if comp2 == 0 then
+            if comp3 == 0 then
+              if comp4 == 0 then comp5
+              else comp4
+            else comp3
+          else comp2
+        else comp1
+
+      case (h1, h2) =>
+        h1.intrinsicStrength.compare(h2.intrinsicStrength)
     }
   }
 
-  def strength = this match {
-    case HIGH_CARD(_)       => 1
-    case ONE_PAIR(_)        => 2
-    case TWO_PAIRS(_, _)    => 3
-    case THREE_OF_A_KIND(_) => 4
-    case FULL_HOUSE(_, _)   => 5
-    case FOUR_OF_A_KIND(_)  => 6
-    case FIVE_OF_A_KIND(_)  => 7
-  }
-  def highestCard = this match {
-    case HIGH_CARD(h)       => h.value
-    case ONE_PAIR(h)        => h.value
-    case TWO_PAIRS(h, _)    => h.value
-    case THREE_OF_A_KIND(h) => h.value
-    case FULL_HOUSE(h, _)   => h.value
-    case FOUR_OF_A_KIND(h)  => h.value
-    case FIVE_OF_A_KIND(h)  => h.value
-  }
-  def secondHighest = this match {
-    case TWO_PAIRS(_, s)  => s.value
-    case FULL_HOUSE(_, s) => s.value
-    case _                => 0
-  }
-
-object HandType:
-  implicit val orderingByStrength: Ordering[HandType] =
-    Ordering.by(t => (t.strength, t.highestCard, t.secondHighest))
-
-case class Hand(cards: List[Card]) extends Ordered[Hand]:
-  def sorted =
+object Hand:
+  def sorted(cards: List[Card]) =
     cards
       .groupBy(_.label)
       .map((label, list) => (label, list.size))
       .toList
-      .sortBy(_._2)
-      .reverse
+      .sortBy(el => (-el._2, -el._1.value))
 
-  def type_ = {
-    sorted match
-      case (highest, 5) :: Nil => HandType.FIVE_OF_A_KIND(highest)
-      case (highest, 4) :: _   => HandType.FOUR_OF_A_KIND(highest)
+  def fromCards(cards: List[Card]) =
+    sorted(cards) match
+      case (highest, 5) :: Nil => Hand.FIVE_OF_A_KIND(highest)
+      case (highest, 4) :: (lowest, 1) :: Nil =>
+        Hand.FOUR_OF_A_KIND(highest, lowest)
       case (highest, 3) :: (second, 2) :: Nil =>
-        HandType.FULL_HOUSE(highest, second)
-      case (highest, 3) :: _ => HandType.THREE_OF_A_KIND(highest)
-      case (oneCard, 2) :: (anotherCard, 2) :: _ =>
-        val List(strongest, weakest) =
-          List(oneCard, anotherCard).sortBy(_.value).reverse
-        HandType.TWO_PAIRS(strongest, weakest)
-      case (oneCard, 2) :: _ => HandType.ONE_PAIR(oneCard)
-      case (oneCard, 1) :: _ =>
-        val highest = sorted.map(_._1).sortBy(_.value).reverse.head
-        HandType.HIGH_CARD(highest)
-  }
+        Hand.FULL_HOUSE(highest, second)
+      case (highest, 3) :: (second, 1) :: (third, 1) :: Nil =>
+        Hand.THREE_OF_A_KIND(highest, second, third)
+      case (strongest, 2) :: (weakest, 2) :: (last, 1) :: Nil =>
+        Hand.TWO_PAIRS(strongest, weakest, last)
+      case (oneCard, 2) :: (second, 1) :: (third, 1) :: (fourth, 1) :: Nil =>
+        Hand.ONE_PAIR(oneCard, second, third, fourth)
+      case (oneCard, 1) :: (second, 1) :: (third, 1) :: (fourth, 1) :: (
+            fifth,
+            1
+          ) :: Nil =>
+        Hand.HIGH_CARD(oneCard, second, third, fourth, fifth)
 
-  def compare(that: Hand) = this.type_.compare(that.type_)
-
-object Hand:
   def fromString(string: String) =
     val cards = string.toCharArray().map(CardLabel.fromChar).map(Card(_)).toList
-    Hand(cards)
+    fromCards(cards)
+
 case class HandBid(hand: Hand, bid: Int)
 
 object HandBid:
@@ -148,10 +189,12 @@ object HandBid:
       case _ => None
 
 case class FullGame(handBids: List[HandBid]):
-  def winnings =
+  def sorted =
     handBids
       .sortBy(_.hand)
-      .zipWithIndex
+
+  def winnings =
+    sorted.zipWithIndex
       .map((hand, index) => hand.bid * (index + 1))
       .sum
 

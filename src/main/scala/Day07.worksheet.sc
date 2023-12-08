@@ -1,38 +1,36 @@
 import day07._
 
+val hands = for 
+  str <- List("32T3K", "32T4K", "KKKK2", "KKKKK", "KKK99", "KKA99", "K2A99", "23456")
+  hand = Hand.fromString(str)
+yield
+  hand.compare(hand)
 
-val handStr = "32T3K"
+val hand = Hand.fromString("KKKK2")
 
-val hand = Hand.fromString(handStr)
-hand.cards.map(_.label).forall(_ == CardLabel.A)
-hand.cards
-  .groupBy(_.label)
-  .map((label, list) => (label, list.size))
-  .toList
-  .sortBy(_._2)
-  .reverse
+hand.compare(hand)
 
-List("AAAAA", "AAAA9", "AAA99", "AAK99", "AAK89", "AQK89")
-  .map(Hand.fromString)
-  .map(_.sorted)
+val comp = (hand, hand) match
+    case (Hand.FOUR_OF_A_KIND(c11, c12), Hand.FOUR_OF_A_KIND(c21, c22)) =>
+      val comp1 = c11.value.compare(c12.value)
+      val comp2 = c12.value.compare(c22.value)
+      if comp1 == 0 
+      then (c12, c22) 
+      else (c11, c21) 
+comp
 
-Hand.fromString("AAAAA").type_
-Hand.fromString("AAAA9").type_
-Hand.fromString("AAA99").type_
-Hand.fromString("99888").type_
-Hand.fromString("AAK99").type_
-Hand.fromString("99KAA").type_
-Hand.fromString("AAK89").type_
-Hand.fromString("AQK89").type_
-Hand.fromString("TQK89").type_
+Hand.fromString("AAAAA")
+Hand.fromString("AAAA9")
+Hand.fromString("AAA99")
+Hand.fromString("99888")
+Hand.fromString("AAK99")
+Hand.fromString("99KAA")
+Hand.fromString("AAK89")
+Hand.fromString("AQK89")
+Hand.fromString("TQK89")
 
-HandType.orderingByStrength.compare(
-  Hand.fromString("TQK99").type_,
-  Hand.fromString("TTK89").type_
-)
-
-Hand.fromString("TQK89").type_ == Hand.fromString("TQA89").type_
-Hand.fromString("TTK89").type_ > Hand.fromString("TQA89").type_
+Hand.fromString("TQK89") == Hand.fromString("TQA89")
+Hand.fromString("TTK89") > Hand.fromString("TQA89")
 
 val input = """32T3K 765
                 |T55J5 684
@@ -44,7 +42,7 @@ input.linesIterator.toList
 val game = FullGame.fromString(input.linesIterator)
 
 game.handBids
-  .sortBy(_.hand.type_)
+  .sortBy(_.hand)
   .zipWithIndex
   .map((hand, index) => hand.bid * (index + 1))
   .sum
@@ -54,16 +52,5 @@ val lines = Source.fromFile("inputs/day_07.txt").getLines()
 
 val fullGame = FullGame.fromString(lines)
 
-val combinations=  for { 
-  x <- fullGame.handBids 
-  y <- fullGame.handBids 
-  if x != y
-  if x.hand.type_ == y.hand.type_
-} yield (x, y)
-combinations.size
-combinations(0)
-val h1 = Hand(List(Card(CardLabel.N4), Card(CardLabel.K), Card(CardLabel.N8), Card(CardLabel.J), Card(CardLabel.N9))) 
-val h2 = Hand(List(Card(CardLabel.N9), Card(CardLabel.N8), Card(CardLabel.N2), Card(CardLabel.K), Card(CardLabel.T)))
-
-h1.type_
-h2.type_
+fullGame.sorted
+fullGame.handBids.length
