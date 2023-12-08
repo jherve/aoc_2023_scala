@@ -1,129 +1,5 @@
-enum CardLabel:
-  case A
-  case K
-  case Q
-  case J
-  case T
-  case N9
-  case N8
-  case N7
-  case N6
-  case N5
-  case N4
-  case N3
-  case N2
+import day07._
 
-  def value = this match {
-    case N2 => 1
-    case N3 => 2
-    case N4 => 3
-    case N5 => 4
-    case N6 => 5
-    case N7 => 6
-    case N8 => 7
-    case N9 => 8
-    case T  => 9
-    case J  => 10
-    case Q  => 11
-    case K  => 12
-    case A  => 13
-  }
-
-object CardLabel:
-  def fromChar(char: Char) =
-    char match {
-      case 'A' => CardLabel.A
-      case 'K' => CardLabel.K
-      case 'Q' => CardLabel.Q
-      case 'J' => CardLabel.J
-      case 'T' => CardLabel.T
-      case '9' => CardLabel.N9
-      case '8' => CardLabel.N8
-      case '7' => CardLabel.N7
-      case '6' => CardLabel.N6
-      case '5' => CardLabel.N5
-      case '4' => CardLabel.N4
-      case '3' => CardLabel.N3
-      case '2' => CardLabel.N2
-    }
-
-case class Card(label: CardLabel)
-
-enum HandType:
-  case FIVE_OF_A_KIND(card: CardLabel)
-  case FOUR_OF_A_KIND(card: CardLabel)
-  case FULL_HOUSE(highest: CardLabel, lowest: CardLabel)
-  case THREE_OF_A_KIND(card: CardLabel)
-  case TWO_PAIRS(highest: CardLabel, lowest: CardLabel)
-  case ONE_PAIR(card: CardLabel)
-  case HIGH_CARD(card: CardLabel)
-
-  def strength = this match {
-    case HIGH_CARD(_)       => 1
-    case ONE_PAIR(_)        => 2
-    case TWO_PAIRS(_, _)    => 3
-    case THREE_OF_A_KIND(_) => 4
-    case FULL_HOUSE(_, _)   => 5
-    case FOUR_OF_A_KIND(_)  => 6
-    case FIVE_OF_A_KIND(_)  => 7
-  }
-  def highestCard = this match {
-    case HIGH_CARD(h)       => h.value
-    case ONE_PAIR(h)        => h.value
-    case TWO_PAIRS(h, _)    => h.value
-    case THREE_OF_A_KIND(h) => h.value
-    case FULL_HOUSE(h, _)   => h.value
-    case FOUR_OF_A_KIND(h)  => h.value
-    case FIVE_OF_A_KIND(h)  => h.value
-  }
-  def secondHighest = this match {
-    case TWO_PAIRS(_, s)  => s.value
-    case FULL_HOUSE(_, s) => s.value
-    case _                => 0
-  }
-
-object HandType:
-  implicit val orderingByStrength: Ordering[HandType] =
-    Ordering.by(t => (t.strength, t.highestCard, t.secondHighest))
-
-case class Hand(cards: List[Card]):
-  def sorted =
-    cards
-      .groupBy(_.label)
-      .map((label, list) => (label, list.size))
-      .toList
-      .sortBy(_._2)
-      .reverse
-
-  def type_ = {
-    sorted match
-      case (highest, 5) :: Nil => HandType.FIVE_OF_A_KIND(highest)
-      case (highest, 4) :: _   => HandType.FOUR_OF_A_KIND(highest)
-      case (highest, 3) :: (second, 2) :: Nil =>
-        HandType.FULL_HOUSE(highest, second)
-      case (highest, 3) :: _ => HandType.THREE_OF_A_KIND(highest)
-      case (oneCard, 2) :: (anotherCard, 2) :: _ =>
-        val List(strongest, weakest) =
-          List(oneCard, anotherCard).sortBy(_.value).reverse
-        HandType.TWO_PAIRS(strongest, weakest)
-      case (oneCard, 2) :: _ => HandType.ONE_PAIR(oneCard)
-      case (oneCard, 1) :: _ =>
-        val highest = sorted.map(_._1).sortBy(_.value).reverse.head
-        HandType.HIGH_CARD(highest)
-  }
-
-object Hand:
-  def fromString(string: String) =
-    val cards = string.toCharArray().map(CardLabel.fromChar).map(Card(_)).toList
-    Hand(cards)
-
-object Day7 {
-  def getSum(lines: Iterator[String]) = {
-    lines
-  }
-}
-
-CardLabel.A
 
 val handStr = "32T3K"
 
@@ -156,3 +32,38 @@ HandType.orderingByStrength.compare(
 )
 
 Hand.fromString("TQK89").type_ == Hand.fromString("TQA89").type_
+Hand.fromString("TTK89").type_ > Hand.fromString("TQA89").type_
+
+val input = """32T3K 765
+                |T55J5 684
+                |KK677 28
+                |KTJJT 220
+                            |QQQJA 483""".stripMargin
+
+input.linesIterator.toList
+val game = FullGame.fromString(input.linesIterator)
+
+game.handBids
+  .sortBy(_.hand.type_)
+  .zipWithIndex
+  .map((hand, index) => hand.bid * (index + 1))
+  .sum
+
+import scala.io.Source
+val lines = Source.fromFile("inputs/day_07.txt").getLines()
+
+val fullGame = FullGame.fromString(lines)
+
+val combinations=  for { 
+  x <- fullGame.handBids 
+  y <- fullGame.handBids 
+  if x != y
+  if x.hand.type_ == y.hand.type_
+} yield (x, y)
+combinations.size
+combinations(0)
+val h1 = Hand(List(Card(CardLabel.N4), Card(CardLabel.K), Card(CardLabel.N8), Card(CardLabel.J), Card(CardLabel.N9))) 
+val h2 = Hand(List(Card(CardLabel.N9), Card(CardLabel.N8), Card(CardLabel.N2), Card(CardLabel.K), Card(CardLabel.T)))
+
+h1.type_
+h2.type_
