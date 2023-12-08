@@ -50,7 +50,7 @@ object CardLabel:
 
 case class Card(label: CardLabel)
 
-enum Hand extends Ordered[Hand]:
+enum SortedHand extends Ordered[SortedHand]:
   case FIVE_OF_A_KIND(main: CardLabel)
   case FOUR_OF_A_KIND(main: CardLabel, last: CardLabel)
   case FULL_HOUSE(main: CardLabel, lowest: CardLabel)
@@ -80,7 +80,7 @@ enum Hand extends Ordered[Hand]:
     case FIVE_OF_A_KIND(_)        => 7
   }
 
-  def compare(that: Hand) = {
+  def compare(that: SortedHand) = {
     (this, that) match {
       case (FIVE_OF_A_KIND(c1), FIVE_OF_A_KIND(c2)) =>
         c1.value.compare(c2.value)
@@ -148,7 +148,7 @@ enum Hand extends Ordered[Hand]:
     }
   }
 
-object Hand:
+object SortedHand:
   def sorted(cards: List[Card]) =
     cards
       .groupBy(_.label)
@@ -158,34 +158,34 @@ object Hand:
 
   def fromCards(cards: List[Card]) =
     sorted(cards) match
-      case (highest, 5) :: Nil => Hand.FIVE_OF_A_KIND(highest)
+      case (highest, 5) :: Nil => SortedHand.FIVE_OF_A_KIND(highest)
       case (highest, 4) :: (lowest, 1) :: Nil =>
-        Hand.FOUR_OF_A_KIND(highest, lowest)
+        SortedHand.FOUR_OF_A_KIND(highest, lowest)
       case (highest, 3) :: (second, 2) :: Nil =>
-        Hand.FULL_HOUSE(highest, second)
+        SortedHand.FULL_HOUSE(highest, second)
       case (highest, 3) :: (second, 1) :: (third, 1) :: Nil =>
-        Hand.THREE_OF_A_KIND(highest, second, third)
+        SortedHand.THREE_OF_A_KIND(highest, second, third)
       case (strongest, 2) :: (weakest, 2) :: (last, 1) :: Nil =>
-        Hand.TWO_PAIRS(strongest, weakest, last)
+        SortedHand.TWO_PAIRS(strongest, weakest, last)
       case (oneCard, 2) :: (second, 1) :: (third, 1) :: (fourth, 1) :: Nil =>
-        Hand.ONE_PAIR(oneCard, second, third, fourth)
+        SortedHand.ONE_PAIR(oneCard, second, third, fourth)
       case (oneCard, 1) :: (second, 1) :: (third, 1) :: (fourth, 1) :: (
             fifth,
             1
           ) :: Nil =>
-        Hand.HIGH_CARD(oneCard, second, third, fourth, fifth)
+        SortedHand.HIGH_CARD(oneCard, second, third, fourth, fifth)
 
   def fromString(string: String) =
     val cards = string.toCharArray().map(CardLabel.fromChar).map(Card(_)).toList
     fromCards(cards)
 
-case class HandBid(hand: Hand, bid: Int)
+case class HandBid(hand: SortedHand, bid: Int)
 
 object HandBid:
   def fromString(string: String) =
     string.split("\\ ").toList match
       case handStr :: bidStr :: Nil =>
-        Some(HandBid(Hand.fromString(handStr), bidStr.toInt))
+        Some(HandBid(SortedHand.fromString(handStr), bidStr.toInt))
       case _ => None
 
 case class FullGame(handBids: List[HandBid]):

@@ -2,16 +2,16 @@ import day07._
 
 val hands = for 
   str <- List("32T3K", "32T4K", "KKKK2", "KKKKK", "KKK99", "KKA99", "K2A99", "23456")
-  hand = Hand.fromString(str)
+  hand = SortedHand.fromString(str)
 yield
   hand.compare(hand)
 
-val hand = Hand.fromString("KKKK2")
+val hand = SortedHand.fromString("KKKK2")
 
 hand.compare(hand)
 
 val comp = (hand, hand) match
-    case (Hand.FOUR_OF_A_KIND(c11, c12), Hand.FOUR_OF_A_KIND(c21, c22)) =>
+    case (SortedHand.FOUR_OF_A_KIND(c11, c12), SortedHand.FOUR_OF_A_KIND(c21, c22)) =>
       val comp1 = c11.value.compare(c12.value)
       val comp2 = c12.value.compare(c22.value)
       if comp1 == 0 
