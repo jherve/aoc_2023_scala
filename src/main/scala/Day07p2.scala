@@ -13,33 +13,35 @@ enum CardLabel extends Ordered[CardLabel]:
   case N4
   case N3
   case N2
+  case Joker
 
   def value = this match {
-    case N2 => 1
-    case N3 => 2
-    case N4 => 3
-    case N5 => 4
-    case N6 => 5
-    case N7 => 6
-    case N8 => 7
-    case N9 => 8
-    case T  => 9
-    case J  => 0
-    case Q  => 11
-    case K  => 12
-    case A  => 13
+    case Joker => 0
+    case N2    => 1
+    case N3    => 2
+    case N4    => 3
+    case N5    => 4
+    case N6    => 5
+    case N7    => 6
+    case N8    => 7
+    case N9    => 8
+    case T     => 9
+    case J     => 10
+    case Q     => 11
+    case K     => 12
+    case A     => 13
   }
 
   def compare(that: CardLabel) =
     this.value.compare(that.value)
 
 object CardLabel:
-  def parse(char: Char) =
+  def parse(char: Char, jokerRule: Boolean) =
     char match {
       case 'A' => CardLabel.A
       case 'K' => CardLabel.K
       case 'Q' => CardLabel.Q
-      case 'J' => CardLabel.J
+      case 'J' => if jokerRule then CardLabel.Joker else CardLabel.J
       case 'T' => CardLabel.T
       case '9' => CardLabel.N9
       case '8' => CardLabel.N8
@@ -93,8 +95,12 @@ object SortedHand:
       case (_, 1) :: _              => Some(SortedHand.HIGH_CARD)
       case _                        => None
 
-  def parse(string: String) =
-    val cards = string.toCharArray().map(CardLabel.parse).map(Card(_)).toList
+  def parse(string: String, jokerRule: Boolean) =
+    val cards = string
+      .toCharArray()
+      .map(CardLabel.parse(_, jokerRule))
+      .map(Card(_))
+      .toList
     fromCards(cards)
 
 case class Hand(cards: List[Card]) extends Ordered[Hand]:
@@ -125,7 +131,7 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
     this.cards(n).compare(that.cards(n))
 
   def nJokers =
-    cards.count(_.label == CardLabel.J)
+    cards.count(_.label == CardLabel.Joker)
 
   def improvedHand =
     (this.asSorted, nJokers) match
@@ -144,17 +150,21 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
       case (SortedHand.HIGH_CARD, 1)       => SortedHand.ONE_PAIR(CardLabel.J)
 
 object Hand:
-  def parse(string: String) =
-    val cards = string.toCharArray().map(CardLabel.parse).map(Card(_)).toList
+  def parse(string: String, jokerRule: Boolean) =
+    val cards = string
+      .toCharArray()
+      .map(CardLabel.parse(_, jokerRule: Boolean))
+      .map(Card(_))
+      .toList
     Hand(cards)
 
 case class HandBid(hand: Hand, bid: Int)
 
 object HandBid:
-  def parse(string: String) =
+  def parse(string: String, jokerRule: Boolean) =
     string.split("\\ ").toList match
       case handStr :: bidStr :: Nil =>
-        Some(HandBid(Hand.parse(handStr), bidStr.toInt))
+        Some(HandBid(Hand.parse(handStr, jokerRule: Boolean), bidStr.toInt))
       case _ => None
 
 case class FullGame(handBids: List[HandBid]):
@@ -168,13 +178,13 @@ case class FullGame(handBids: List[HandBid]):
       .sum
 
 object FullGame:
-  def parse(lines: Iterator[String]) =
+  def parse(lines: Iterator[String], jokerRule: Boolean) =
     FullGame(
-      lines.map(HandBid.parse(_)).toList.map(_.get)
+      lines.map(HandBid.parse(_, jokerRule: Boolean)).toList.map(_.get)
     )
 
 object Day7Part2 {
-  def getSum(lines: Iterator[String]) = {
-    FullGame.parse(lines).winnings
+  def getSum(lines: Iterator[String], jokerRule: Boolean) = {
+    FullGame.parse(lines, jokerRule: Boolean).winnings
   }
 }
