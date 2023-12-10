@@ -1,6 +1,10 @@
 package day07
 /* See the problem here : https://adventofcode.com/2023/day/7
 
+  I've done it in "domain-driven-design" style, which is likely overkill
+  for this particular problem but leads to a code that is very natural to read
+  and maintain.
+
   It basically consists of parsing such inputs as "32T3K 765" into
   a "hand" (of a 3, a 2, a 10, a 3 and a Kind) and a "bid" (of value 765).
 
@@ -11,6 +15,12 @@ package day07
 
   The value of a list of (hand, bid) is determined by sorting all the hands
   according to their value.
+
+  In the first part of the problem, "J" cards are regular "jacks" and are considered
+  like any other card.
+
+  In the second part, "J" cards become jokers that can be turned into any other card
+  to improve a given hand.
  */
 
 enum CardLabel extends Ordered[CardLabel]:
@@ -156,6 +166,7 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
 
       case (SortedHand.FULL_HOUSE(main), 2) =>
         Some(SortedHand.FIVE_OF_A_KIND(main))
+
       case (SortedHand.FULL_HOUSE(main), 1) =>
         Some(SortedHand.FOUR_OF_A_KIND(main))
 
@@ -165,23 +176,34 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
       case (SortedHand.THREE_OF_A_KIND(main), 1) =>
         Some(SortedHand.FOUR_OF_A_KIND(main))
 
-      case (SortedHand.TWO_PAIRS(main), 1) => Some(SortedHand.FULL_HOUSE(main))
+      case (SortedHand.TWO_PAIRS(main), 1) =>
+        Some(SortedHand.FULL_HOUSE(main))
+
       case (SortedHand.ONE_PAIR(main), 1) =>
         Some(SortedHand.THREE_OF_A_KIND(main))
+
       case (SortedHand.ONE_PAIR(main), 2) =>
         Some(SortedHand.FOUR_OF_A_KIND(main))
+
       case (SortedHand.ONE_PAIR(main), 3) =>
         Some(SortedHand.FIVE_OF_A_KIND(main))
-      case (SortedHand.HIGH_CARD(main), 1) => Some(SortedHand.ONE_PAIR(main))
+
+      case (SortedHand.HIGH_CARD(main), 1) =>
+        Some(SortedHand.ONE_PAIR(main))
+
       case (SortedHand.HIGH_CARD(main), 2) =>
         Some(SortedHand.THREE_OF_A_KIND(main))
+
       case (SortedHand.HIGH_CARD(main), 3) =>
         Some(SortedHand.FOUR_OF_A_KIND(main))
+
       case (SortedHand.HIGH_CARD(main), 4) =>
         Some(SortedHand.FIVE_OF_A_KIND(main))
+
       case (SortedHand.FIVE_JOKERS, 5) =>
         Some(SortedHand.FIVE_OF_A_KIND(CardLabel.A))
-      case _ => None
+      case _ =>
+        None
 
 object Hand:
   def parse(string: String, jokerRule: Boolean) =
