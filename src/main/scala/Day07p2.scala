@@ -57,17 +57,19 @@ case class Card(label: CardLabel) extends Ordered[Card]:
   def compare(that: Card) =
     this.label.compare(that.label)
 
-enum SortedHand:
+enum SortedHand extends Ordered[SortedHand]:
   case FIVE_OF_A_KIND(main: CardLabel)
   case FOUR_OF_A_KIND(main: CardLabel)
   case FULL_HOUSE(main: CardLabel)
   case THREE_OF_A_KIND(main: CardLabel)
   case TWO_PAIRS(main: CardLabel)
   case ONE_PAIR(main: CardLabel)
-  case HIGH_CARD
+  case HIGH_CARD(main: CardLabel)
+  case FIVE_JOKERS
 
   def intrinsicStrength = this match {
-    case HIGH_CARD          => 1
+    case FIVE_JOKERS        => 0
+    case HIGH_CARD(_)       => 1
     case ONE_PAIR(_)        => 2
     case TWO_PAIRS(_)       => 3
     case THREE_OF_A_KIND(_) => 4
@@ -75,6 +77,9 @@ enum SortedHand:
     case FOUR_OF_A_KIND(_)  => 6
     case FIVE_OF_A_KIND(_)  => 7
   }
+
+  def compare(that: SortedHand) =
+    this.intrinsicStrength.compare(that.intrinsicStrength)
 
 object SortedHand:
   def sorted(cards: List[Card]) =
@@ -85,14 +90,15 @@ object SortedHand:
       .sortBy(el => (-el._2, -el._1.value))
 
   def fromCards(cards: List[Card]) =
-    sorted(cards) match
+    sorted(cards.filter(_.label != CardLabel.Joker)) match
       case (main, 5) :: Nil         => Some(SortedHand.FIVE_OF_A_KIND(main))
       case (main, 4) :: _           => Some(SortedHand.FOUR_OF_A_KIND(main))
       case (main, 3) :: (_, 2) :: _ => Some(SortedHand.FULL_HOUSE(main))
       case (main, 3) :: _           => Some(SortedHand.THREE_OF_A_KIND(main))
       case (main, 2) :: (_, 2) :: _ => Some(SortedHand.TWO_PAIRS(main))
       case (main, 2) :: _           => Some(SortedHand.ONE_PAIR(main))
-      case (_, 1) :: _              => Some(SortedHand.HIGH_CARD)
+      case (main, 1) :: _           => Some(SortedHand.HIGH_CARD(main))
+      case Nil                      => Some(SortedHand.FIVE_JOKERS)
       case _                        => None
 
   def parse(string: String, jokerRule: Boolean) =
@@ -136,18 +142,28 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
   def improvedHand =
     (this.asSorted, nJokers) match
       case (hand, 0) => hand
+
       case (SortedHand.FOUR_OF_A_KIND(main), 1) =>
         SortedHand.FIVE_OF_A_KIND(main)
+
       case (SortedHand.FULL_HOUSE(main), 2) => SortedHand.FIVE_OF_A_KIND(main)
       case (SortedHand.FULL_HOUSE(main), 1) => SortedHand.FOUR_OF_A_KIND(main)
+
       case (SortedHand.THREE_OF_A_KIND(main), 2) =>
         SortedHand.FIVE_OF_A_KIND(main)
+
       case (SortedHand.THREE_OF_A_KIND(main), 1) =>
         SortedHand.FOUR_OF_A_KIND(main)
-      case (SortedHand.TWO_PAIRS(main), 2) => SortedHand.FOUR_OF_A_KIND(main)
-      case (SortedHand.TWO_PAIRS(main), 1) => SortedHand.THREE_OF_A_KIND(main)
+
+      case (SortedHand.TWO_PAIRS(main), 1) => SortedHand.FULL_HOUSE(main)
       case (SortedHand.ONE_PAIR(main), 1)  => SortedHand.THREE_OF_A_KIND(main)
-      case (SortedHand.HIGH_CARD, 1)       => SortedHand.ONE_PAIR(CardLabel.J)
+      case (SortedHand.ONE_PAIR(main), 2)  => SortedHand.FOUR_OF_A_KIND(main)
+      case (SortedHand.ONE_PAIR(main), 3)  => SortedHand.FIVE_OF_A_KIND(main)
+      case (SortedHand.HIGH_CARD(main), 1) => SortedHand.ONE_PAIR(main)
+      case (SortedHand.HIGH_CARD(main), 2) => SortedHand.THREE_OF_A_KIND(main)
+      case (SortedHand.HIGH_CARD(main), 3) => SortedHand.FOUR_OF_A_KIND(main)
+      case (SortedHand.HIGH_CARD(main), 4) => SortedHand.FIVE_OF_A_KIND(main)
+      case (SortedHand.FIVE_JOKERS, 5) => SortedHand.FIVE_OF_A_KIND(CardLabel.A)
 
 object Hand:
   def parse(string: String, jokerRule: Boolean) =
@@ -185,6 +201,8 @@ object FullGame:
 
 object Day7Part2 {
   def getSum(lines: Iterator[String], jokerRule: Boolean) = {
-    FullGame.parse(lines, jokerRule: Boolean).winnings
+    val game = FullGame.parse(lines, jokerRule: Boolean)
+
+    game.winnings
   }
 }
