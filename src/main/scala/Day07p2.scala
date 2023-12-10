@@ -114,24 +114,18 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
     SortedHand.fromCards(cards).get
 
   def compare(that: Hand) =
-    val strengthComp =
-      this.asSorted.intrinsicStrength.compare(that.asSorted.intrinsicStrength)
-    if strengthComp == 0
-    then
-      val compare0 = this.compareNth(that, 0)
-      val compare1 = this.compareNth(that, 1)
-      val compare2 = this.compareNth(that, 2)
-      val compare3 = this.compareNth(that, 3)
-      val compare4 = this.compareNth(that, 4)
-      if compare0 == 0 then
-        if compare1 == 0 then
-          if compare2 == 0 then
-            if compare3 == 0 then compare4
-            else compare3
-          else compare2
-        else compare1
-      else compare0
-    else strengthComp
+    val strengthCompare =
+      this.improvedHand.intrinsicStrength
+        .compare(that.improvedHand.intrinsicStrength)
+    val nthCompare = List(0, 1, 2, 3, 4).map(this.compareNth(that, _))
+
+    (strengthCompare, nthCompare) match
+      case (0, 0 :: 0 :: 0 :: 0 :: c :: Nil) => c
+      case (0, 0 :: 0 :: 0 :: c :: _)        => c
+      case (0, 0 :: 0 :: c :: _)             => c
+      case (0, 0 :: c :: _)                  => c
+      case (0, c :: _)                       => c
+      case (c, _)                            => c
 
   def compareNth(that: Hand, n: Int) =
     this.cards(n).compare(that.cards(n))
