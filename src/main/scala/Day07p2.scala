@@ -1,4 +1,18 @@
 package day07p2
+/* See the problem here : https://adventofcode.com/2023/day/7
+
+  It basically consists of parsing such inputs as "32T3K 765" into
+  a "hand" (of a 3, a 2, a 10, a 3 and a Kind) and a "bid" (of value 765).
+
+  Hands can be sorted depending on the cards they contain, with a poker-style
+  order (five of a kind, four of a kind, full house, pair, ...). In case of a
+  tie, hands H1 and H2 are sorted by comparing the 1st card of H1 against the
+  1st card of H2, then the 2nd card of H1 against the 2nd card of H2, and so on.
+
+  The value of a list of (hand, bid) is determined by sorting all the hands
+  according to their value.
+ */
+
 enum CardLabel extends Ordered[CardLabel]:
   case A
   case K
