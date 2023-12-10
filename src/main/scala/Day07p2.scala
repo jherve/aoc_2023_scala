@@ -115,8 +115,8 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
 
   def compare(that: Hand) =
     val strengthCompare =
-      this.improvedHand.intrinsicStrength
-        .compare(that.improvedHand.intrinsicStrength)
+      this.improvedHand.get.intrinsicStrength
+        .compare(that.improvedHand.get.intrinsicStrength)
     val nthCompare = List(0, 1, 2, 3, 4).map(this.compareNth(that, _))
 
     (strengthCompare, nthCompare) match
@@ -135,29 +135,39 @@ case class Hand(cards: List[Card]) extends Ordered[Hand]:
 
   def improvedHand =
     (this.asSorted, nJokers) match
-      case (hand, 0) => hand
+      case (hand, 0) => Some(hand)
 
       case (SortedHand.FOUR_OF_A_KIND(main), 1) =>
-        SortedHand.FIVE_OF_A_KIND(main)
+        Some(SortedHand.FIVE_OF_A_KIND(main))
 
-      case (SortedHand.FULL_HOUSE(main), 2) => SortedHand.FIVE_OF_A_KIND(main)
-      case (SortedHand.FULL_HOUSE(main), 1) => SortedHand.FOUR_OF_A_KIND(main)
+      case (SortedHand.FULL_HOUSE(main), 2) =>
+        Some(SortedHand.FIVE_OF_A_KIND(main))
+      case (SortedHand.FULL_HOUSE(main), 1) =>
+        Some(SortedHand.FOUR_OF_A_KIND(main))
 
       case (SortedHand.THREE_OF_A_KIND(main), 2) =>
-        SortedHand.FIVE_OF_A_KIND(main)
+        Some(SortedHand.FIVE_OF_A_KIND(main))
 
       case (SortedHand.THREE_OF_A_KIND(main), 1) =>
-        SortedHand.FOUR_OF_A_KIND(main)
+        Some(SortedHand.FOUR_OF_A_KIND(main))
 
-      case (SortedHand.TWO_PAIRS(main), 1) => SortedHand.FULL_HOUSE(main)
-      case (SortedHand.ONE_PAIR(main), 1)  => SortedHand.THREE_OF_A_KIND(main)
-      case (SortedHand.ONE_PAIR(main), 2)  => SortedHand.FOUR_OF_A_KIND(main)
-      case (SortedHand.ONE_PAIR(main), 3)  => SortedHand.FIVE_OF_A_KIND(main)
-      case (SortedHand.HIGH_CARD(main), 1) => SortedHand.ONE_PAIR(main)
-      case (SortedHand.HIGH_CARD(main), 2) => SortedHand.THREE_OF_A_KIND(main)
-      case (SortedHand.HIGH_CARD(main), 3) => SortedHand.FOUR_OF_A_KIND(main)
-      case (SortedHand.HIGH_CARD(main), 4) => SortedHand.FIVE_OF_A_KIND(main)
-      case (SortedHand.FIVE_JOKERS, 5) => SortedHand.FIVE_OF_A_KIND(CardLabel.A)
+      case (SortedHand.TWO_PAIRS(main), 1) => Some(SortedHand.FULL_HOUSE(main))
+      case (SortedHand.ONE_PAIR(main), 1) =>
+        Some(SortedHand.THREE_OF_A_KIND(main))
+      case (SortedHand.ONE_PAIR(main), 2) =>
+        Some(SortedHand.FOUR_OF_A_KIND(main))
+      case (SortedHand.ONE_PAIR(main), 3) =>
+        Some(SortedHand.FIVE_OF_A_KIND(main))
+      case (SortedHand.HIGH_CARD(main), 1) => Some(SortedHand.ONE_PAIR(main))
+      case (SortedHand.HIGH_CARD(main), 2) =>
+        Some(SortedHand.THREE_OF_A_KIND(main))
+      case (SortedHand.HIGH_CARD(main), 3) =>
+        Some(SortedHand.FOUR_OF_A_KIND(main))
+      case (SortedHand.HIGH_CARD(main), 4) =>
+        Some(SortedHand.FIVE_OF_A_KIND(main))
+      case (SortedHand.FIVE_JOKERS, 5) =>
+        Some(SortedHand.FIVE_OF_A_KIND(CardLabel.A))
+      case _ => None
 
 object Hand:
   def parse(string: String, jokerRule: Boolean) =
