@@ -12,6 +12,7 @@ import day11.Day11
     case (4, _) => Day4.getSum(lines)
     case (7, 1) => Day7.getSum(lines, false)
     case (7, 2) => Day7.getSum(lines, true)
-    case (11, 1) => Day11.sumFromImage(lines)
+    case (11, 1) => Day11.sumFromImage(lines, 2)
+    case (11, 2) => Day11.sumFromImage(lines, 1000000)
 
   println(result)

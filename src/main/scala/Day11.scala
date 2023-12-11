@@ -3,17 +3,18 @@ import scala.math._
 
 case class Position(x: Int, y: Int)
 
-case class EmptySpace(position: Position)
 case class Galaxy(position: Position):
-  def positionAfterExpansion(image: Image) =
+  def positionAfterExpansion(image: Image, scalingFactor: Int) =
     val emptyRowsBefore = image.emptyRows.filter(_ < position.y).size
     val emptyColsBefore = image.emptyCols.filter(_ < position.x).size
-    Position(position.x + emptyColsBefore, position.y + emptyRowsBefore)
+    Position(
+      position.x + emptyColsBefore * (scalingFactor - 1),
+      position.y + emptyRowsBefore * (scalingFactor - 1)
+    )
 
   def distanceTo(that: Galaxy) =
-    abs(this.position.y - that.position.y) + abs(
-      this.position.x - that.position.x
-    )
+    abs(this.position.y - that.position.y)
+      + abs(this.position.x - that.position.x)
 
 case class Image(width: Int, height: Int, galaxies: List[Galaxy]):
   def emptyRows =
@@ -22,20 +23,21 @@ case class Image(width: Int, height: Int, galaxies: List[Galaxy]):
   def emptyCols =
     Range(0, width).toSet.diff(galaxies.map(_.position.x).toSet)
 
-  def intoExpanded =
+  def intoExpanded(scalingFactor: Int) =
     Image(
-      width + emptyCols.size,
-      height + emptyRows.size,
-      galaxies.map(g => Galaxy(g.positionAfterExpansion(this)))
+      width + emptyCols.size * (scalingFactor - 1),
+      height + emptyRows.size * (scalingFactor - 1),
+      galaxies.map(g => Galaxy(g.positionAfterExpansion(this, scalingFactor)))
     )
 
-  def shortestPaths =
-    val allUniquePairs = for
+  def allUniquePairs =
+    for
       (g1, idx1) <- galaxies.zipWithIndex
       (g2, idx2) <- galaxies.zipWithIndex
       if idx1 < idx2
     yield (g1, g2)
 
+  def shortestPaths =
     allUniquePairs.map((g1, g2) => g1.distanceTo(g2))
 
   private def toLine(y: Int): String =
@@ -64,7 +66,13 @@ object Image:
     Image(width, height, galaxies)
 
 object Day11 {
-  def sumFromImage(lines: Iterator[String]) = {
-    Image.parse(lines).intoExpanded.shortestPaths.sum
+  def sumFromImage(lines: Iterator[String], scalingFactor: Int): Long = {
+    Image
+      .parse(lines)
+      .intoExpanded(scalingFactor)
+      .shortestPaths
+      // For some reason the "sum" method overflows without a warning AND does not turn
+      // into a Long even if the return value is marked as such
+      .foldLeft(0L)(_ + _)
   }
 }
