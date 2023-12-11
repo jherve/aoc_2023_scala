@@ -1,4 +1,5 @@
 package day11
+import scala.math._
 
 case class Position(x: Int, y: Int)
 
@@ -9,12 +10,17 @@ case class Galaxy(position: Position):
     val emptyColsBefore = image.emptyCols.filter(_ < position.x).size
     Position(position.x + emptyColsBefore, position.y + emptyRowsBefore)
 
+  def distanceTo(that: Galaxy) =
+    abs(this.position.y - that.position.y) + abs(
+      this.position.x - that.position.x
+    )
+
 case class Image(width: Int, height: Int, galaxies: List[Galaxy]):
   def emptyRows =
-    Range(0, 10).toSet.diff(galaxies.map(_.position.y).toSet)
+    Range(0, height).toSet.diff(galaxies.map(_.position.y).toSet)
 
   def emptyCols =
-    Range(0, 10).toSet.diff(galaxies.map(_.position.x).toSet)
+    Range(0, width).toSet.diff(galaxies.map(_.position.x).toSet)
 
   def intoExpanded =
     Image(
@@ -22,6 +28,15 @@ case class Image(width: Int, height: Int, galaxies: List[Galaxy]):
       height + emptyRows.size,
       galaxies.map(g => Galaxy(g.positionAfterExpansion(this)))
     )
+
+  def shortestPaths =
+    val allUniquePairs = for
+      (g1, idx1) <- galaxies.zipWithIndex
+      (g2, idx2) <- galaxies.zipWithIndex
+      if idx1 < idx2
+    yield (g1, g2)
+
+    allUniquePairs.map((g1, g2) => g1.distanceTo(g2))
 
   private def toLine(y: Int): String =
     Range(0, width)
@@ -49,7 +64,7 @@ object Image:
     Image(width, height, galaxies)
 
 object Day11 {
-  def toImage(lines: Iterator[String]) = {
-    Image.parse(lines)
+  def sumFromImage(lines: Iterator[String]) = {
+    Image.parse(lines).intoExpanded.shortestPaths.sum
   }
 }
