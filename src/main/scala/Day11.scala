@@ -1,4 +1,5 @@
 package day11
+/* See the problem here : https://adventofcode.com/2023/day/11 */
 import scala.math._
 
 case class Position(x: Int, y: Int)

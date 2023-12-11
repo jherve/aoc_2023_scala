@@ -7,3 +7,4 @@ Only the following days are functional :
 - day1 (part 1)
 - day4 (parts 1 & 2)
 - day7 (parts 1 & 2)
+- day11 (parts 1 & 2)
