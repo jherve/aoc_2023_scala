@@ -16,8 +16,31 @@ object SpringCondition:
 
 type ListOfDamagedRecords = List[Int]
 
+case class SpringConfiguration(spring: List[SpringCondition]):
+  def toDamaged =
+    spring.foldLeft((Some(List()): Option[List[Int]], 0))((acc, condition) =>
+      val (damaged, currentBroken) = acc
+
+      (condition, damaged, currentBroken) match
+        case (_, None, nb)                    => (None, nb)
+        case (SpringCondition.Unknown, _, nb) => (None, nb)
+        case (SpringCondition.Broken, Some(damaged), nb) =>
+          (Some(damaged), nb + 1)
+        case (_, damaged, 0)        => (damaged, 0)
+        case (_, Some(damaged), nb) => (Some(damaged ++ List(nb)), 0)
+    ) match
+      case (None, _)  => None
+      case (list, 0)  => list
+      case (Some(list), nb) => Some(list ++ List(nb))
+
+object SpringConfiguration:
+  def parse(str: String) =
+    SpringConfiguration(
+      str.toCharArray.map(SpringCondition.parse(_).get).toList
+    )
+
 case class ConditionRecord(
-    springs: List[SpringCondition],
+    springs: SpringConfiguration,
     damagedRecords: ListOfDamagedRecords
 )
 
@@ -27,7 +50,7 @@ object ConditionRecord:
       case conditions :: damaged :: Nil =>
         Some(
           ConditionRecord(
-            conditions.toCharArray.map(SpringCondition.parse(_).get).toList,
+            SpringConfiguration.parse(conditions),
             damaged.split(",").toList.map(_.toInt)
           )
         )
