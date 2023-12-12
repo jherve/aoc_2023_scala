@@ -29,9 +29,32 @@ case class SpringConfiguration(spring: List[SpringCondition]):
         case (_, damaged, 0)        => (damaged, 0)
         case (_, Some(damaged), nb) => (Some(damaged ++ List(nb)), 0)
     ) match
-      case (None, _)  => None
-      case (list, 0)  => list
+      case (None, _)        => None
+      case (list, 0)        => list
       case (Some(list), nb) => Some(list ++ List(nb))
+
+  def alternates =
+    spring.foldLeft(List(): List[SpringConfiguration])((acc, condition) =>
+      val alternates = acc
+      (alternates, condition) match
+        case (Nil, SpringCondition.Unknown) =>
+          List(
+            SpringConfiguration(List(SpringCondition.Broken)),
+            SpringConfiguration(List(SpringCondition.Operational))
+          )
+        case (Nil, cond) => List(SpringConfiguration(List(cond)))
+        case (alternates, SpringCondition.Unknown) =>
+          alternates.flatMap(conf =>
+            List(
+              SpringConfiguration(conf.spring ++ List(SpringCondition.Broken)),
+              SpringConfiguration(
+                conf.spring ++ List(SpringCondition.Operational)
+              )
+            )
+          )
+        case (alternates, cond) =>
+          alternates.map(conf => SpringConfiguration(conf.spring ++ List(cond)))
+    )
 
 object SpringConfiguration:
   def parse(str: String) =
@@ -42,7 +65,9 @@ object SpringConfiguration:
 case class ConditionRecord(
     springs: SpringConfiguration,
     damagedRecords: ListOfDamagedRecords
-)
+):
+  def alternatesThatMatchDamagedRecord =
+    springs.alternates.filter(_.toDamaged.get == damagedRecords)
 
 object ConditionRecord:
   def parse(str: String) =
@@ -64,5 +89,8 @@ object PuzzleInput:
 
 object Day12 {
   def sumOfArrangements(lines: Iterator[String]) =
-    PuzzleInput.parse(lines)
+    PuzzleInput
+      .parse(lines)
+      .map(_.get.alternatesThatMatchDamagedRecord.size)
+      .sum
 }
