@@ -5,6 +5,7 @@ import day04._
 import day07.Day7
 import day11.Day11
 import day12.Day12
+import day15.Day15
 
 @main def hello(day: Int, part: Int, inputFile: String): Unit =
   val lines = Utils.lines(inputFile)
@@ -17,5 +18,6 @@ import day12.Day12
     case (11, 1) => Day11.sumFromImage(lines, 2)
     case (11, 2) => Day11.sumFromImage(lines, 1000000)
     case (12, _) => Day12.sumOfArrangements(lines)
+    case (15, _) => Day15.sumOfHashes(Utils.commaSeparatedValues(inputFile))
 
   println(result)
