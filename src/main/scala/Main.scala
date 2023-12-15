@@ -1,4 +1,5 @@
 import scala.io.Source
+import utils._
 import day01._
 import day04._
 import day07.Day7
@@ -6,7 +7,7 @@ import day11.Day11
 import day12.Day12
 
 @main def hello(day: Int, part: Int, inputFile: String): Unit =
-  val lines = Source.fromFile(inputFile).getLines()
+  val lines = Utils.lines(inputFile)
 
   val result = (day, part) match
     case (1, 1) => getSum(lines)
