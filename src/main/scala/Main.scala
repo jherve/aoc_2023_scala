@@ -11,13 +11,14 @@ import day15.Day15
   val lines = Utils.lines(inputFile)
 
   val result = (day, part) match
-    case (1, 1) => getSum(lines)
-    case (4, _) => Day4.getSum(lines)
-    case (7, 1) => Day7.getSum(lines, false)
-    case (7, 2) => Day7.getSum(lines, true)
+    case (1, 1)  => getSum(lines)
+    case (4, _)  => Day4.getSum(lines)
+    case (7, 1)  => Day7.getSum(lines, false)
+    case (7, 2)  => Day7.getSum(lines, true)
     case (11, 1) => Day11.sumFromImage(lines, 2)
     case (11, 2) => Day11.sumFromImage(lines, 1000000)
     case (12, _) => Day12.sumOfArrangements(lines)
-    case (15, _) => Day15.sumOfHashes(Utils.commaSeparatedValues(inputFile))
+    case (15, 1) => Day15.sumOfHashes(Utils.commaSeparatedValues(inputFile))
+    case (15, 2) => Day15.focusingPower(Utils.commaSeparatedValues(inputFile))
 
   println(result)
