@@ -138,25 +138,16 @@ case class BeamTravel(
     Range(0, contraption.size.height + 1).map(line).mkString("\n")
 
   def asGridOfBeams =
-    val beamsPositions = beams
-      .map(b =>
-        val repr = b.direction match
-          case Direction.Downward  => 'v'
-          case Direction.Upward    => '^'
-          case Direction.Leftward  => '<'
-          case Direction.Rightward => '>'
-
-        (b.position, repr)
-      )
-      .toMap
-
     def line(y: Int) =
       Range(0, contraption.size.width + 1)
         .map(x =>
-          beamsPositions.getOrElse(
-            Position(x, y),
-            if energisedTiles.contains(Position(x, y)) then '#' else '.'
-          )
+          beamPositionsHistory.filter(_._1 == Position(x, y)).toList match
+            case Nil                             => '.'
+            case (_, Direction.Downward) :: Nil  => 'v'
+            case (_, Direction.Upward) :: Nil    => '^'
+            case (_, Direction.Leftward) :: Nil  => '<'
+            case (_, Direction.Rightward) :: Nil => '>'
+            case _ :: tail                       => tail.size + 1
         )
         .mkString
 
