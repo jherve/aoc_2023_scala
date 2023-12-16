@@ -100,14 +100,26 @@ case class BeamTravel(
     )
     BeamTravel(contraption, newEnergised, newBeams)
 
+  def toStep(n: Int) =
+    LazyList
+      .from(0)
+      .scanLeft(this, 0)((acc, idx) => (acc._1.next(), idx))
+      .takeWhile(_._2 < n)
+      .last
+      ._1
+
+  def beamsAreInAlreadyVisitedPositions = 
+    val beamsPositions = beams.map(_.position).toSet
+    (beamsPositions &~ energisedTiles).isEmpty
+
   def runUntilStationary() =
     LazyList
       .from(1)
-      .scanLeft((this, true))((acc, _) =>
+      .scanLeft((this, false))((acc, idx) =>
         val next = acc._1.next()
-        (next, next.energisedTiles != acc._1.energisedTiles)
+        (next, next.beamsAreInAlreadyVisitedPositions && next.energisedTiles == acc._1.energisedTiles)
       )
-      .takeWhile(_._2)
+      .takeWhile(!_._2)
       .last
       ._1
 
@@ -115,6 +127,31 @@ case class BeamTravel(
     def line(y: Int) =
       Range(0, contraption.size.width + 1)
         .map(x => if energisedTiles.contains(Position(x, y)) then '#' else '.')
+        .mkString
+
+    Range(0, contraption.size.height + 1).map(line).mkString("\n")
+
+  def asGridOfBeams =
+    val beamsPositions = beams
+      .map(b =>
+        val repr = b.direction match
+          case Direction.Downward  => 'v'
+          case Direction.Upward    => '^'
+          case Direction.Leftward  => '<'
+          case Direction.Rightward => '>'
+
+        (b.position, repr)
+      )
+      .toMap
+
+    def line(y: Int) =
+      Range(0, contraption.size.width + 1)
+        .map(x =>
+          beamsPositions.getOrElse(
+            Position(x, y),
+            if energisedTiles.contains(Position(x, y)) then '#' else '.'
+          )
+        )
         .mkString
 
     Range(0, contraption.size.height + 1).map(line).mkString("\n")
