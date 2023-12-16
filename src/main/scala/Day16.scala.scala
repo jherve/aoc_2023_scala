@@ -88,17 +88,27 @@ case class Beam(position: Position, direction: Direction):
 case class BeamTravel(
     contraption: Contraption,
     energisedTiles: Set[Position],
-    beams: List[Beam]
+    beams: List[Beam],
+    beamPositionsHistory: Set[(Position, Direction)]
 ):
+  def beamsStillWithinGrid =
+    beams.filter(_.position.isWithin(contraption.size))
+
   def next() =
-    val beamsStillWithinGrid =
-      beams.filter(_.position.isWithin(contraption.size))
     val newEnergised =
       energisedTiles | beamsStillWithinGrid.map(_.position).toSet
-    val newBeams = beamsStillWithinGrid.flatMap(beam =>
-      beam.next(contraption.grid(beam.position))
+    val newBeams = beamsStillWithinGrid
+      .filterNot(b => beamPositionsHistory.contains((b.position, b.direction)))
+      .flatMap(beam => beam.next(contraption.grid(beam.position)))
+
+    BeamTravel(
+      contraption,
+      newEnergised,
+      newBeams,
+      beamPositionsHistory | beamsStillWithinGrid
+        .map(b => (b.position, b.direction))
+        .toSet
     )
-    BeamTravel(contraption, newEnergised, newBeams)
 
   def toStep(n: Int) =
     LazyList
@@ -108,16 +118,12 @@ case class BeamTravel(
       .last
       ._1
 
-  def beamsAreInAlreadyVisitedPositions = 
-    val beamsPositions = beams.map(_.position).toSet
-    (beamsPositions &~ energisedTiles).isEmpty
-
   def runUntilStationary() =
     LazyList
       .from(1)
       .scanLeft((this, false))((acc, idx) =>
         val next = acc._1.next()
-        (next, next.beamsAreInAlreadyVisitedPositions && next.energisedTiles == acc._1.energisedTiles)
+        (next, next.beamPositionsHistory == acc._1.beamPositionsHistory)
       )
       .takeWhile(!_._2)
       .last
@@ -161,7 +167,8 @@ object BeamTravel:
     BeamTravel(
       contraption,
       Set(),
-      List(Beam(Position(0, 0), Direction.Rightward))
+      List(Beam(Position(0, 0), Direction.Rightward)),
+      Set()
     )
 
 object Contraption:
