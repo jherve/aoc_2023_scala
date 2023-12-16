@@ -6,6 +6,7 @@ import day07.Day7
 import day11.Day11
 import day12.Day12
 import day15.Day15
+import day16.Day16
 
 @main def hello(day: Int, part: Int, inputFile: String): Unit =
   val lines = Utils.lines(inputFile)
@@ -20,5 +21,6 @@ import day15.Day15
     case (12, _) => Day12.sumOfArrangements(lines)
     case (15, 1) => Day15.sumOfHashes(Utils.commaSeparatedValues(inputFile))
     case (15, 2) => Day15.focusingPower(Utils.commaSeparatedValues(inputFile))
+    case (16, 1) => Day16.getEnergisedTiles(lines)
 
   println(result)
