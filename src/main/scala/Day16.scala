@@ -87,23 +87,21 @@ case class Beam(position: Position, direction: Direction):
 
 case class BeamTravel(
     contraption: Contraption,
-    energisedTiles: Set[Position],
     beams: Set[Beam],
     beamPositionsHistory: Set[(Position, Direction)]
 ):
   def beamsStillWithinGrid =
     beams.filter(_.position.isWithin(contraption.size))
 
+  def energisedTiles = beamPositionsHistory.map(_._1)
+
   def next() =
-    val newEnergised =
-      energisedTiles | beamsStillWithinGrid.map(_.position)
     val newBeams = beamsStillWithinGrid
       .diff(beamPositionsHistory.map(b => Beam(b._1, b._2)))
       .flatMap(beam => beam.next(contraption.grid(beam.position)))
 
     BeamTravel(
       contraption,
-      newEnergised,
       newBeams,
       beamPositionsHistory | beamsStillWithinGrid
         .map(b => (b.position, b.direction))
@@ -157,7 +155,6 @@ object BeamTravel:
   def init(contraption: Contraption) =
     BeamTravel(
       contraption,
-      Set(),
       Set(Beam(Position(0, 0), Direction.Rightward)),
       Set()
     )
